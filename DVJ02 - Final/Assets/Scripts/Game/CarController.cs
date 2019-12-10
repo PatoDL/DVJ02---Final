@@ -27,10 +27,15 @@ public class CarController : MonoBehaviour
 
     public TerrainData td;
 
+    public LayerMask rayMask;
+
+    float yHeight;
+
     private void Start()
     {
         rig = GetComponent<Rigidbody>();
         shallMove = false;
+        yHeight = transform.position.y;
     }
 
     // Update is called once per frame
@@ -44,32 +49,43 @@ public class CarController : MonoBehaviour
 
             Debug.DrawRay(ray.origin, ray.direction * rayDistance, Color.yellow);
 
-            if (Physics.Raycast(ray.origin, ray.direction, out raycastHit, rayDistance, 1))
+            if (Physics.Raycast(ray.origin, ray.direction, out raycastHit, rayDistance, rayMask))
             {
                 nextPosition = raycastHit.point;
                 target.transform.position = nextPosition;
                 target.transform.rotation = Quaternion.identity;
+                //nextPosition.y = yHeight;
+                
+                
                 shallMove = true;
             }
         }
 
-        if(transform.position.x == nextPosition.x && transform.position.z == nextPosition.z)
-        {
-            shallMove = false;
-        }
-
+        //Debug.Log(nextPosition);
         Vector3 direction = (nextPosition - transform.position).normalized;
 
-        Quaternion finalRot = Quaternion.LookRotation(direction, td.GetInterpolatedNormal(transform.position.x / 500, transform.position.z / 500));
+        Vector3 upVec = td.GetInterpolatedNormal(transform.position.x / 500, transform.position.z / 500);
 
-        RaycastHit floorHit;
+        RaycastHit rh;
+        if(Physics.Raycast(floorCheckerOrigin.position, -transform.up, out rh, 100f, rayMask))
+        {
+            if (rh.transform)
+            {
+                Debug.Log(rh.normal);
+                upVec = rh.normal;
+                Debug.DrawRay(floorCheckerOrigin.position, -transform.up * 100f);
+            }
+
+        }
+
+        
+
+        Quaternion finalRot = Quaternion.LookRotation(direction,upVec);
 
         if (shallMove)
         {
-            transform.rotation = Quaternion.Lerp(transform.rotation, finalRot, rotationSpeed / 100 * Time.deltaTime);
+            transform.rotation = Quaternion.Lerp(transform.rotation, finalRot, rotationSpeed * Time.deltaTime);
             transform.position += transform.forward * speed * Time.deltaTime;
-            Debug.DrawRay(floorCheckerOrigin.position, Vector3.down*5f);
-            
         }
 
         if(transform.position.y<limit.position.y)
