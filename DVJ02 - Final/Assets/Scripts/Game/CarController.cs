@@ -5,16 +5,15 @@ using UnityEngine.EventSystems;
 
 public class CarController : MonoBehaviour
 {
-    public delegate void OnItemCollected();
-    public static OnItemCollected CollectItem;
-
-    public delegate void OnCarDeath();
-    public static OnCarDeath CarDie;
+    public delegate void OnCarAction();
+    public static OnCarAction CollectItem;
+    public static OnCarAction CarDie;
 
     public float speed;
     public float rotationSpeed;
     public int rayDistance;
     public bool shallMove;
+    public Vector3 targetDistance;
 
     public Transform limit;
 
@@ -55,13 +54,12 @@ public class CarController : MonoBehaviour
                 target.transform.position = nextPosition;
                 target.transform.rotation = Quaternion.identity;
                 //nextPosition.y = yHeight;
-                
-                
-                shallMove = true;
+
+                if ((nextPosition - transform.position).x > targetDistance.x || (nextPosition - transform.position).z > targetDistance.z)
+                    shallMove = true;
             }
         }
 
-        //Debug.Log(nextPosition);
         Vector3 direction = (nextPosition - transform.position).normalized;
 
         Vector3 upVec = td.GetInterpolatedNormal(transform.position.x / 500, transform.position.z / 500);
@@ -71,14 +69,11 @@ public class CarController : MonoBehaviour
         {
             if (rh.transform)
             {
-                Debug.Log(rh.normal);
                 upVec = rh.normal;
                 Debug.DrawRay(floorCheckerOrigin.position, -transform.up * 100f);
             }
 
         }
-
-        
 
         Quaternion finalRot = Quaternion.LookRotation(direction,upVec);
 
